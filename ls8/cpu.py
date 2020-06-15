@@ -2,10 +2,6 @@
 
 import sys
 
-LDI = 0b10000010
-PRN = 0b01000111
-HLT = 0b00000001
-
 
 class CPU:
     """Main CPU class."""
@@ -15,9 +11,9 @@ class CPU:
         self.ram = [0] * 256
         self.reg = [0] * 8
         self.pc = 0
-        self.LDI = LDI
-        self.PRN = PRN
-        self.HLT = HLT
+        self.LDI = 0b10000010
+        self.PRN = 0b01000111
+        self.HLT = 0b00000001
 
     def ram_read(self, pc):
         return self.ram[pc]
@@ -89,20 +85,20 @@ class CPU:
                 self.prn()
 
             elif ir == self.HLT:
-                running = self.hlt(running)
+                running = self.hlt()
 
     def ldi(self):
         address = self.ram[self.pc+1]
         value = self.ram[self.pc+2]
-        self.ram_write(address, value)
+        self.reg[address] = value
         self.pc += 3
 
     def prn(self):
         address = self.ram[self.pc+1]
-        value = self.ram_read(address)
+        value = self.reg[address]
         print(value)
         self.pc += 2
 
-    def hlt(self, running):
+    def hlt(self):
         self.pc += 1
         return False
