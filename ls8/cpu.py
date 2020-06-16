@@ -23,24 +23,25 @@ class CPU:
 
     def load(self):
         """Load a program into memory."""
+        # check input
+        if len(sys.argv) < 2:
+            raise NameError("No input program specified, exiting...")
 
         address = 0
+        program_name = sys.argv[1]
 
-        # For now, we've just hardcoded a program:
-
-        program = [
-            # From print8.ls8
-            0b10000010,  # LDI R0,8
-            0b00000000,
-            0b00001000,
-            0b01000111,  # PRN R0
-            0b00000000,
-            0b00000001,  # HLT
-        ]
+        with open(f"{program_name}") as p:
+            program = p.read().split("\n")
 
         for instruction in program:
-            self.ram[address] = instruction
-            address += 1
+            # skip comment lines
+            if instruction.startswith("#") == False:
+                # strip inline comments
+                instruction, separator, tail = instruction.partition("#")
+                # ignore empty lines
+                if instruction != "":
+                    self.ram[address] = int(instruction, 2)
+                    address += 1
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
