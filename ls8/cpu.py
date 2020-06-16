@@ -28,21 +28,18 @@ class CPU:
         if len(sys.argv) < 2:
             raise NameError("No input program specified, exiting...")
 
-        address = 0
         program_name = sys.argv[1]
 
-        with open(f"{program_name}") as p:
-            program = p.read().split("\n")
+        with open(program_name) as p:
+            for address, line in enumerate(p):
+                line = line.split("#")[0]
 
-        for instruction in program:
-            # skip comment lines
-            if instruction.startswith("#") == False:
-                # strip inline comments
-                instruction = instruction.partition("#")[0]
-                # ignore empty lines
-                if instruction != "":
-                    self.ram[address] = int(instruction, 2)
-                    address += 1
+                try:
+                    instruction = int(line, 2)
+                except ValueError:
+                    continue
+
+                self.ram[address] = instruction
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
