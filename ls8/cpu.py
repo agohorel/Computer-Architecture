@@ -14,6 +14,7 @@ class CPU:
         self.LDI = 0b10000010
         self.PRN = 0b01000111
         self.HLT = 0b00000001
+        self.MUL = 0b10100010
 
     def ram_read(self, pc):
         return self.ram[pc]
@@ -37,7 +38,7 @@ class CPU:
             # skip comment lines
             if instruction.startswith("#") == False:
                 # strip inline comments
-                instruction, separator, tail = instruction.partition("#")
+                instruction = instruction.partition("#")[0]
                 # ignore empty lines
                 if instruction != "":
                     self.ram[address] = int(instruction, 2)
@@ -74,6 +75,7 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
+
         running = True
 
         while running == True:
@@ -84,6 +86,9 @@ class CPU:
 
             elif ir == self.PRN:
                 self.prn()
+
+            elif ir == self.MUL:
+                self.mul()
 
             elif ir == self.HLT:
                 running = self.hlt()
@@ -103,3 +108,13 @@ class CPU:
     def hlt(self):
         self.pc += 1
         return False
+
+    def mul(self):
+        address_1 = self.ram[self.pc+1]
+        address_2 = self.ram[self.pc+2]
+
+        value_1 = self.reg[address_1]
+        value_2 = self.reg[address_2]
+        self.reg[address_1] = value_1 * value_2
+
+        self.pc += 3
