@@ -17,7 +17,10 @@ class CPU:
             0b10000010: self.ldi,
             0b01000111: self.prn,
             0b00000001: self.hlt,
+            0b01100101: self.add,
+            0b10100001: self.sub,
             0b10100010: self.mul,
+            0b10100011: self.div,
             0b01000101: self.push,
             0b01000110: self.pop
         }
@@ -54,7 +57,13 @@ class CPU:
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
-        # elif op == "SUB": etc
+        elif op == "SUB":
+            self.reg[reg_a] -= self.reg[reg_b]
+        elif op == "MUL":
+            self.reg[reg_a] *= self.reg[reg_b]
+        elif op == "DIV":
+            self.reg[reg_a] /= self.reg[reg_b]
+
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -105,19 +114,39 @@ class CPU:
     def hlt(self):
         sys.exit(0)
 
+    def add(self):
+        addresses = self.get_operands()
+
+        self.alu("ADD", *addresses)
+        self.pc += 3
+
+    def sub(self):
+        addresses = self.get_operands()
+
+        self.alu("SUB", *addresses)
+        self.pc += 3
+
     def mul(self):
+        addresses = self.get_operands()
+
+        self.alu("MUL", *addresses)
+        self.pc += 3
+
+    def div(self):
+        addresses = self.get_operands()
+
+        self.alu("DIV", *addresses)
+        self.pc += 3
+
+    def get_operands(self):
         address_1 = self.ram[self.pc+1]
         address_2 = self.ram[self.pc+2]
 
-        value_1 = self.reg[address_1]
-        value_2 = self.reg[address_2]
-        self.reg[address_1] = value_1 * value_2
-
-        self.pc += 3
+        return [address_1, address_2]
 
     def push(self):
         self.sp -= 1
-        
+
         address = self.ram[self.pc+1]
         value = self.reg[address]
         self.ram[self.sp] = value
@@ -128,6 +157,6 @@ class CPU:
         address = self.ram[self.pc+1]
         value = self.ram[self.sp]
         self.reg[address] = value
-        
+
         self.sp += 1
         self.pc += 2
