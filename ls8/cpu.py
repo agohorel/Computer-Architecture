@@ -10,12 +10,16 @@ class CPU:
         """Construct a new CPU."""
         self.ram = [0] * 256
         self.reg = [0] * 8
+        self.reg[7] = 0xF4  # stack pointer
         self.pc = 0
+        self.sp = self.reg[7]
         self.instructions = {
             0b10000010: self.ldi,
             0b01000111: self.prn,
             0b00000001: self.hlt,
-            0b10100010: self.mul
+            0b10100010: self.mul,
+            0b01000101: self.push,
+            0b01000110: self.pop
         }
 
     def ram_read(self, pc):
@@ -110,3 +114,20 @@ class CPU:
         self.reg[address_1] = value_1 * value_2
 
         self.pc += 3
+
+    def push(self):
+        self.sp -= 1
+        
+        address = self.ram[self.pc+1]
+        value = self.reg[address]
+        self.ram[self.sp] = value
+
+        self.pc += 2
+
+    def pop(self):
+        address = self.ram[self.pc+1]
+        value = self.ram[self.sp]
+        self.reg[address] = value
+        
+        self.sp += 1
+        self.pc += 2
