@@ -17,7 +17,7 @@ class CPU:
             0b10000010: self.ldi,
             0b01000111: self.prn,
             0b00000001: self.hlt,
-            0b01100101: self.add,
+            0b10101000: self.add,
             0b10100001: self.sub,
             0b10100010: self.mul,
             0b10100011: self.div,
@@ -97,46 +97,38 @@ class CPU:
             instruction = self.instructions.get(ir)
 
             if instruction:
+                inc = (ir >> 6) + 1
                 self.instructions[ir]()
+                self.pc += inc
 
     def ldi(self):
         address = self.ram[self.pc+1]
         value = self.ram[self.pc+2]
         self.reg[address] = value
-        self.pc += 3
 
     def prn(self):
         address = self.ram[self.pc+1]
         value = self.reg[address]
         print(value)
-        self.pc += 2
 
     def hlt(self):
         sys.exit(0)
 
     def add(self):
         addresses = self.get_operands()
-
         self.alu("ADD", *addresses)
-        self.pc += 3
 
     def sub(self):
         addresses = self.get_operands()
-
         self.alu("SUB", *addresses)
-        self.pc += 3
 
     def mul(self):
         addresses = self.get_operands()
-
         self.alu("MUL", *addresses)
-        self.pc += 3
 
     def div(self):
         addresses = self.get_operands()
-
         self.alu("DIV", *addresses)
-        self.pc += 3
 
     def get_operands(self):
         address_1 = self.ram[self.pc+1]
@@ -151,12 +143,9 @@ class CPU:
         value = self.reg[address]
         self.ram[self.sp] = value
 
-        self.pc += 2
-
     def pop(self):
         address = self.ram[self.pc+1]
         value = self.ram[self.sp]
         self.reg[address] = value
 
         self.sp += 1
-        self.pc += 2
