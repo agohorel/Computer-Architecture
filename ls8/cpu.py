@@ -10,19 +10,21 @@ class CPU:
         """Construct a new CPU."""
         self.ram = [0] * 256
         self.reg = [0] * 8
-        self.reg[7] = 0xF4  # stack pointer
         self.pc = 0
-        self.sp = self.reg[7]
+        self.sp = 7
+        self.reg[self.sp] = 0xF4
         self.instructions = {
             0b10000010: self.ldi,
             0b01000111: self.prn,
             0b00000001: self.hlt,
-            0b10101000: self.add,
+            0b10100000: self.add,
             0b10100001: self.sub,
             0b10100010: self.mul,
             0b10100011: self.div,
             0b01000101: self.push,
-            0b01000110: self.pop
+            0b01000110: self.pop,
+            0b01010000: self.call,
+            0b00010001: self.ret
         }
 
     def ram_read(self, pc):
@@ -93,13 +95,17 @@ class CPU:
         running = True
 
         while running == True:
+
             ir = self.ram[self.pc]
             instruction = self.instructions.get(ir)
+            sets_pc = (ir >> 4) & 0b1
 
-            if instruction:
+            if instruction and not sets_pc:
                 inc = (ir >> 6) + 1
                 self.instructions[ir]()
                 self.pc += inc
+            elif instruction:
+                self.instructions[ir]()
 
     def ldi(self):
         address = self.ram[self.pc+1]
@@ -148,4 +154,23 @@ class CPU:
         value = self.ram[self.sp]
         self.reg[address] = value
 
+        self.sp += 1
+    
+    def call(self):
+        # memory address we want to return to after subroutine
+        return_addr = self.pc + 2
+        
+        # push onto stack
+        self.sp -= 1
+        self.ram[self.reg[self.sp]] = return_addr
+
+        # get the address to be called
+        reg_num = self.ram[self.pc+1]
+        subroutine_addr = self.reg[reg_num]
+
+        # call the subroutine
+        self.pc = subroutine_addr
+
+    def ret(self):
+        self.pc = self.ram[self.reg[self.sp]]
         self.sp += 1
