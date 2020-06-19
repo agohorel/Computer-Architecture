@@ -29,7 +29,14 @@ class CPU:
             0b10100111: self.compare,
             0b01010101: self.jeq,
             0b01010110: self.jne,
-            0b01010100: self.jmp
+            0b01010100: self.jmp,
+            0b10101000: self.and_op,
+            0b10101010: self.or_op,
+            0b01101001: self.not_op,
+            0b10101011: self.xor,
+            0b10101100: self.shl,
+            0b10101101: self.shr,
+            0b10100100: self.mod
         }
 
     def ram_read(self, pc):
@@ -59,7 +66,7 @@ class CPU:
                 self.ram[address] = instruction
                 address += 1
 
-    def alu(self, op, reg_a, reg_b):
+    def alu(self, op, reg_a, reg_b=None):
         """ALU operations."""
 
         if op == "ADD":
@@ -70,6 +77,25 @@ class CPU:
             self.reg[reg_a] *= self.reg[reg_b]
         elif op == "DIV":
             self.reg[reg_a] /= self.reg[reg_b]
+        elif op == "MOD":
+            self.reg[reg_a] %= self.reg[reg_b]
+        elif op == "AND":
+            result = self.reg[reg_a] & self.reg[reg_b]
+            self.reg[reg_a] = result
+        elif op == "OR":
+            result = self.reg[reg_a] | self.reg[reg_b]
+            self.reg[reg_a] = result
+        elif op == "XOR":
+            result = self.reg[reg_a] ^ self.reg[reg_b]
+            self.reg[reg_a] = result
+        elif op == "SHL":
+            result = self.reg[reg_a] << self.reg[reg_b]
+            self.reg[reg_a] = result
+        elif op == "SHR":
+            result = self.reg[reg_a] >> self.reg[reg_b]
+            self.reg[reg_a] = result
+        elif op == "NOT":
+            self.reg[reg_a] = ~self.reg[reg_a]
         elif op == "CMP":
             if self.reg[reg_a] == self.reg[reg_b]:
                 self.flags[-1] = 1
@@ -209,3 +235,31 @@ class CPU:
         address = self.ram[self.pc+1]
         jump_to = self.reg[address]
         self.pc = jump_to
+
+    def and_op(self):
+        addresses = self.get_operands()
+        self.alu("AND", *addresses)
+
+    def or_op(self):
+        addresses = self.get_operands()
+        self.alu("OR", *addresses)
+
+    def not_op(self):
+        operand_addr = self.ram[self.pc+1]
+        self.alu("NOT", operand_addr)
+
+    def xor(self):
+        addresses = self.get_operands()
+        self.alu("XOR", *addresses)
+
+    def shl(self):
+        addresses = self.get_operands()
+        self.alu("SHL", *addresses)
+
+    def shr(self):
+        addresses = self.get_operands()
+        self.alu("SHR", *addresses)
+
+    def mod(self):
+        addresses = self.get_operands()
+        self.alu("MOD", *addresses)
