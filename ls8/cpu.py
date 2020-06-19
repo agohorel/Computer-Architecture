@@ -10,6 +10,7 @@ class CPU:
         """Construct a new CPU."""
         self.ram = [0] * 256
         self.reg = [0] * 8
+        self.flags = [0] * 8
         self.pc = 0
         self.sp = 7
         self.reg[self.sp] = 0xF4
@@ -24,7 +25,11 @@ class CPU:
             0b01000101: self.push,
             0b01000110: self.pop,
             0b01010000: self.call,
-            0b00010001: self.ret
+            0b00010001: self.ret,
+            0b10100111: self.compare,
+            0b01010101: self.jeq,
+            0b01010110: self.jne,
+            0b01010100: self.jmp
         }
 
     def ram_read(self, pc):
@@ -65,7 +70,13 @@ class CPU:
             self.reg[reg_a] *= self.reg[reg_b]
         elif op == "DIV":
             self.reg[reg_a] /= self.reg[reg_b]
-
+        elif op == "CMP":
+            if self.reg[reg_a] == self.reg[reg_b]:
+                self.flags[-1] = 1
+            elif self.reg[reg_a] < self.reg[reg_b]:
+                self.flags[-3] = 1
+            else:
+                self.flags[-2] = 1
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -95,7 +106,6 @@ class CPU:
         running = True
 
         while running == True:
-
             ir = self.ram[self.pc]
             instruction = self.instructions.get(ir)
             sets_pc = (ir >> 4) & 0b1
@@ -136,6 +146,10 @@ class CPU:
         addresses = self.get_operands()
         self.alu("DIV", *addresses)
 
+    def compare(self):
+        addresses = self.get_operands()
+        self.alu("CMP", *addresses)
+
     def get_operands(self):
         address_1 = self.ram[self.pc+1]
         address_2 = self.ram[self.pc+2]
@@ -155,11 +169,11 @@ class CPU:
         self.reg[address] = value
 
         self.sp += 1
-    
+
     def call(self):
         # memory address we want to return to after subroutine
         return_addr = self.pc + 2
-        
+
         # push onto stack
         self.sp -= 1
         self.ram[self.reg[self.sp]] = return_addr
@@ -174,3 +188,24 @@ class CPU:
     def ret(self):
         self.pc = self.ram[self.reg[self.sp]]
         self.sp += 1
+
+    def jeq(self):
+        if self.flags[-1] == 1:
+            address = self.ram[self.pc+1]
+            jump_to = self.reg[address]
+            self.pc = jump_to
+        else:
+            self.pc += 2
+
+    def jne(self):
+        if self.flags[-1] == 0:
+            address = self.ram[self.pc+1]
+            jump_to = self.reg[address]
+            self.pc = jump_to
+        else:
+            self.pc += 2
+
+    def jmp(self):
+        address = self.ram[self.pc+1]
+        jump_to = self.reg[address]
+        self.pc = jump_to
